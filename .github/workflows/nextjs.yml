@@ -41,4 +41,49 @@ jobs:
           fi
 
       - name: Setup Node
-        use
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: ${{ steps.detect.outputs.manager }}
+          cache-dependency-path: |
+            ${{ env.WORKDIR }}/package-lock.json
+            ${{ env.WORKDIR }}/yarn.lock
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+        with:
+          static_site_generator: next
+
+      - name: Restore Next cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.WORKDIR }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles(format('{0}/package-lock.json', env.WORKDIR), format('{0}/yarn.lock', env.WORKDIR)) }}-${{ hashFiles(format('{0}/**.[jt]s', env.WORKDIR), format('{0}/**.[jt]sx', env.WORKDIR)) }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles(format('{0}/package-lock.json', env.WORKDIR), format('{0}/yarn.lock', env.WORKDIR)) }}-
+
+      - name: Install dependencies
+        working-directory: ${{ env.WORKDIR }}
+        run: ${{ steps.detect.outputs.manager }} ${{ steps.detect.outputs.command }}
+
+      - name: Build & Export
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+          ${{ steps.detect.outputs.runner }} next build
+          ${{ steps.detect.outputs.runner }} next export
+
+      - name: Upload artifact (static site)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ env.WORKDIR }}/out
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
