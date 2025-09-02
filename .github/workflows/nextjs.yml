@@ -68,9 +68,7 @@ jobs:
 
       - name: Build & Export
         working-directory: ${{ env.WORKDIR }}
-        run: |
-          ${{ steps.detect.outputs.runner }} next build
-          ${{ steps.detect.outputs.runner }} next export
+        run: ${{ steps.detect.outputs.runner }} next build
 
       - name: Upload artifact (static site)
         uses: actions/upload-pages-artifact@v3
