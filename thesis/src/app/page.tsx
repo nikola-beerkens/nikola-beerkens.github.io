@@ -27,8 +27,9 @@ export default function Home() {
     // try to autoplay unmuted
     if (!audioRef.current) return;
     const audio = audioRef.current;
-    audio.loop = true;
-    audio.volume = 1;
+  audio.loop = true;
+  // make music a bit quieter by default
+  audio.volume = 0.25;
     audio.play().then(() => {
       setIsPlaying(true);
       setAutoplayBlocked(false);
@@ -74,7 +75,7 @@ export default function Home() {
 
       <div style={{ position: 'relative', width: '300px', height: '525px', border: '10px solid #3f2716ff' }}>
         {/* Background music (unmuted attempt). Top-left icons control play/pause. */}
-        <audio ref={audioRef} src="/music.mp3" />
+        <audio ref={audioRef} src="/music2.mp3" />
         {/* Background */}
         <Image src="/bg.png" alt="background" fill style={{ position: 'absolute', objectFit: 'contain', zIndex: 1 }} />
         
@@ -85,7 +86,7 @@ export default function Home() {
         <Image src="/shelf.png" alt="shelf" fill style={{ position: 'absolute', objectFit: 'contain', zIndex: 3 }} />
         
         {/* Robot Baker */}
-        <div style={{ position: 'absolute', zIndex: 4, transform: `translateX(${robotX}px)`, transition: 'transform 0.1s ease', top: '32%', width: '100%', height: '48%' }}>
+        <div style={{ position: 'absolute', zIndex: 4, transform: `translateX(${robotX}px)`, transition: 'transform 0.1s ease', top: '32%', width: '100%', height: '50%' }}>
           <Image src="/robot_baker.png" alt="robot baker" fill style={{ objectFit: 'contain' }} />
         </div>
         

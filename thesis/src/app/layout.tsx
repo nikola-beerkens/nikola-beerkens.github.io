@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Home',
-  description: 'BakeMl game',
+  title: 'BakeML',
+  description: 'BakeML game',
 };
 
 export default function RootLayout({
