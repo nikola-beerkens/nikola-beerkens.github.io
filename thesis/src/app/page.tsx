@@ -1,103 +1,97 @@
-import Image from "next/image";
+'use client';
+
+import Image from 'next/image';
+import { useState, useEffect, useRef } from 'react';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [robotX, setRobotX] = useState(0);
+  const maxX = 55; // Maximum movement to the right
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'a') {
+        setRobotX((prev) => Math.max(prev - 20, -maxX));
+      } else if (e.key.toLowerCase() === 'd') {
+        setRobotX((prev) => Math.min(prev + 20, maxX));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    // try to autoplay unmuted
+    if (!audioRef.current) return;
+    const audio = audioRef.current;
+    audio.loop = true;
+    audio.volume = 1;
+    audio.play().then(() => {
+      setIsPlaying(true);
+      setAutoplayBlocked(false);
+    }).catch(() => {
+      // Autoplay with sound was blocked by the browser
+      setIsPlaying(false);
+      setAutoplayBlocked(true);
+    });
+
+    return () => {
+      audio.pause();
+    };
+  }, []);
+
+  return (
+    <div style={{ minHeight: '100vh', backgroundColor: '#c0b597ff', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      {/* Top-left icons (play / pause) */}
+      <div style={{ position: 'fixed', top: 12, left: 12, zIndex: 100, display: 'flex', gap: 8, alignItems: 'center' }}>
+        <button
+          onClick={async () => {
+            const a = audioRef.current;
+            if (!a) return;
+            if (isPlaying) {
+              // stop playback
+              a.pause();
+              setIsPlaying(false);
+            } else {
+              try {
+                await a.play();
+                setIsPlaying(true);
+                setAutoplayBlocked(false);
+              } catch {
+                setAutoplayBlocked(true);
+              }
+            }
+          }}
+          aria-label={isPlaying ? 'Stop music' : 'Play music'}
+          style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+        >
+          <Image src={isPlaying ? '/music_icon.png' : '/music_icon_crossed.png'} alt="music toggle" width={40} height={40} />
+        </button>
+      </div>
+
+      <div style={{ position: 'relative', width: '300px', height: '525px', border: '10px solid #3f2716ff' }}>
+        {/* Background music (unmuted attempt). Top-left icons control play/pause. */}
+        <audio ref={audioRef} src="/music.mp3" />
+        {/* Background */}
+        <Image src="/bg.png" alt="background" fill style={{ position: 'absolute', objectFit: 'contain', zIndex: 1 }} />
+        
+        {/* Ovens */}
+        <Image src="/ovens.png" alt="ovens" fill style={{ position: 'absolute', objectFit: 'contain', zIndex: 2 }} />
+        
+        {/* Shelf */}
+        <Image src="/shelf.png" alt="shelf" fill style={{ position: 'absolute', objectFit: 'contain', zIndex: 3 }} />
+        
+        {/* Robot Baker */}
+        <div style={{ position: 'absolute', zIndex: 4, transform: `translateX(${robotX}px)`, transition: 'transform 0.1s ease', top: '32%', width: '100%', height: '48%' }}>
+          <Image src="/robot_baker.png" alt="robot baker" fill style={{ objectFit: 'contain' }} />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        
+        {/* Counter */}
+        <Image src="/counter.png" alt="counter" fill style={{ position: 'absolute', objectFit: 'contain', zIndex: 5 }} />
+      </div>
     </div>
   );
 }
