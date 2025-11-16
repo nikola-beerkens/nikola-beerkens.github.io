@@ -14,17 +14,16 @@ export default function Level2BakeML() {
 
   const initialData: Row[] = [
     { id: 1, ingredient: "flour", amount: 500, type: "sweet" },
-    { id: 2, ingredient: "sugar", amount: null, type: "sweet" },
+    { id: 2, ingredient: "sugar", amount: null, type: "savory" },
     { id: 3, ingredient: "butter", amount: 200, type: "savory" },
     { id: 4, ingredient: "flour", amount: 500, type: "savory" },
     { id: 5, ingredient: "sugar", amount: 100, type: "sweet" },
     { id: 6, ingredient: "butter", amount: 200, type: "savory" },
     { id: 7, ingredient: "flour", amount: 5000, type: "sweet" }, // outlier
-    { id: 8, ingredient: "sugar", amount: 100, type: "swwet" }, // mislabeled
+    { id: 8, ingredient: "sugar", amount: 200, type: "swwet" }, // mislabeled
     { id: 9, ingredient: "butter", amount: 200, type: "savory" },
-    { id: 10, ingredient: "flour", amount: 500, type: "sweet" },
-    { id: 11, ingredient: "sugar", amount: 100, type: "sweet" },
-    { id: 12, ingredient: "butter", amount: 200, type: "savory" },
+    { id: 10, ingredient: "water", amount: 500, type: "savory" },
+    { id: 11, ingredient: "sugar", amount: 300, type: "sweet" },
   ];
 
   const [data, setData] = useState<Row[]>(initialData);
