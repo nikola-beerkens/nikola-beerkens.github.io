@@ -65,7 +65,7 @@ export default function Level1BakeML() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">BakeML — Level 1: What is Learning?</h1>
+      <h1 className="text-2xl font-bold mb-4">Level 1: What is Learning?</h1>
       <p className="mb-4">Help Clank by creating simple IF rules. Rules are applied in order; Clank will repeat them exactly.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -131,7 +131,7 @@ export default function Level1BakeML() {
                 placeholder="result (e.g. sweet)"
               />
 
-              <button onClick={addRule} className="bg-blue-600 text-white px-3 py-1 rounded">Add Rule</button>
+              <button onClick={addRule} className="blue-bg text-white px-3 py-1 rounded">Add Rule</button>
             </div>
 
             <div className="mt-4">
@@ -143,7 +143,7 @@ export default function Level1BakeML() {
                       <strong>{i + 1}.</strong> if <code>{r.feature}</code> {r.op} <code>{r.value}</code> → <em>{r.result}</em>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={() => removeRule(r.id)} className="text-sm text-red-600">Remove</button>
+                      <button onClick={() => removeRule(r.id)} className="text-sm red">Remove</button>
                     </div>
                   </li>
                 ))}
@@ -151,7 +151,7 @@ export default function Level1BakeML() {
               </ul>
 
               <div className="mt-4 flex gap-2">
-                <button onClick={applyRules} className="bg-green-600 text-white px-3 py-1 rounded">Apply Rules</button>
+                <button onClick={applyRules} className="red-bg text-white px-3 py-1 rounded">Apply Rules</button>
                 <button onClick={() => { setRules([]); setPredictions([]); }} className="bg-gray-200 px-3 py-1 rounded">Reset</button>
               </div>
             </div>
@@ -209,7 +209,7 @@ export default function Level1BakeML() {
               <div className="mt-2">
                 {stats ? (
                   <div>
-                    <p className="font-medium">Happy customers: <span className="text-green-600">{Math.round((stats.accuracy / 100) * data.length)}</span></p>
+                    <p className="font-medium">Happy customers: <span className="blue">{Math.round((stats.accuracy / 100) * data.length)}</span></p>
                     <p className="text-sm text-gray-600">(Higher accuracy means fewer wasted pastries)</p>
                   </div>
                 ) : (
@@ -221,15 +221,15 @@ export default function Level1BakeML() {
         </div>
       </div>
 
-      <div className="mt-6 text-xs text-gray-500">
+      {/* <div className="mt-6 text-xs text-gray-500">
         <p>Tip: This level is intentionally simple. The goal is to show that following explicit rules is different from &quot;learning.&quot; Later levels will introduce automated training.</p>
-      </div>
+      </div> */}
 
       {predictions.length > 0 && (
         <div className="mt-8 flex gap-4">
           <button
             onClick={() => router.push('/?completed=true')}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            className="brown-bg text-white px-4 py-2 rounded"
           >
             Back to Bakery
           </button>

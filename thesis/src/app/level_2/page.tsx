@@ -21,13 +21,13 @@ export default function Level2BakeML() {
     { id: 6, ingredient: "butter", amount: 200, type: "savory" },
     { id: 7, ingredient: "flour", amount: 5000, type: "sweet" }, // outlier
     { id: 8, ingredient: "sugar", amount: 200, type: "swwet" }, // mislabeled
-    { id: 9, ingredient: "butter", amount: 200, type: "savory" },
+    { id: 9, ingredient: "butter", amount: 300, type: "sweet" },
     { id: 10, ingredient: "water", amount: 500, type: "savory" },
     { id: 11, ingredient: "sugar", amount: 300, type: "sweet" },
   ];
 
   const [data, setData] = useState<Row[]>(initialData);
-  const [actionsLeft, setActionsLeft] = useState(5);
+  const [actionsLeft, setActionsLeft] = useState(4);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [simulationResult, setSimulationResult] = useState<{ correct: number; total: number; accuracy: string } | null>(null);
 
@@ -78,36 +78,43 @@ export default function Level2BakeML() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">BakeML — Level 2: Data-Cleaning Puzzle</h1>
+      <h1 className="text-2xl font-bold mb-4">Level 2: Data-Cleaning Puzzle</h1>
       <p className="mb-4">Help Clank clean the bakery dataset! You have <strong>{actionsLeft}</strong> actions left.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Dataset Table */}
-        <div>
-          <table className="w-full table-auto border-collapse">
-            <thead>
-              <tr className="border-b">
-                <th className="px-2 py-1">id</th>
-                <th className="px-2 py-1">ingredient</th>
-                <th className="px-2 py-1">amount</th>
-                <th className="px-2 py-1">type</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((row) => (
+        <div className="bg-white rounded-lg shadow p-4">
+          {/* optional: ensure horizontal overflow is handled on small screens */}
+          <div className="overflow-x-auto">
+           <table className="w-full table-auto border-collapse">
+             <thead>
+               <tr className="border-b">
+                 <th className="px-2 py-1">id</th>
+                 <th className="px-2 py-1">ingredient</th>
+                 <th className="px-2 py-1">amount</th>
+                 <th className="px-2 py-1">type</th>
+               </tr>
+             </thead>
+             <tbody>
+               {data.map((row) => (
                 <tr
                   key={row.id}
-                  className={`border-t cursor-pointer ${selectedRow === row.id ? 'bg-yellow-100' : ''} ${row._removed ? 'line-through text-gray-400' : ''}`}
                   onClick={() => setSelectedRow(row.id)}
+                  className={
+                    `border-t cursor-pointer transition-colors hover:bg-gray-100 ` +
+                    `${selectedRow === row.id ? 'bg-yellow-100' : ''} ` +
+                    `${row._removed ? 'line-through text-gray-400' : ''}`
+                  }
                 >
-                  <td className="px-2 py-1">{row.id}</td>
-                  <td className="px-2 py-1">{row.ingredient}</td>
-                  <td className="px-2 py-1">{row.amount !== null ? row.amount : 'NULL'}</td>
-                  <td className="px-2 py-1">{row.type}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                   <td className="px-2 py-1">{row.id}</td>
+                   <td className="px-2 py-1">{row.ingredient}</td>
+                   <td className="px-2 py-1">{row.amount !== null ? row.amount : 'NULL'}</td>
+                   <td className="px-2 py-1">{row.type}</td>
+                 </tr>
+               ))}
+             </tbody>
+           </table>
+          </div>
         </div>
 
         {/* Fix Panel */}
@@ -115,17 +122,17 @@ export default function Level2BakeML() {
           <h2 className="font-semibold mb-2">Fix Actions</h2>
           {selectedRow ? (
             <div className="flex flex-col gap-2">
-              <button className="bg-blue-600 text-white px-3 py-1 rounded" onClick={() => applyFix(selectedRow, 'fill_missing')}>Fill Missing</button>
-              <button className="bg-green-600 text-white px-3 py-1 rounded" onClick={() => applyFix(selectedRow, 'correct_label')}>Correct Label</button>
-              <button className="bg-red-600 text-white px-3 py-1 rounded" onClick={() => applyFix(selectedRow, 'remove_duplicate')}>Remove Duplicate</button>
-              <button className="bg-yellow-500 text-black px-3 py-1 rounded" onClick={() => applyFix(selectedRow, 'clamp_outlier')}>Clamp Outlier</button>
+              <button className="blue-bg text-white px-3 py-1 rounded cursor-pointer" onClick={() => applyFix(selectedRow, 'fill_missing')}>Fill Missing</button>
+              <button className="blue-bg text-white px-3 py-1 rounded cursor-pointer" onClick={() => applyFix(selectedRow, 'correct_label')}>Correct Label</button>
+              <button className="blue-bg text-white px-3 py-1 rounded cursor-pointer" onClick={() => applyFix(selectedRow, 'remove_duplicate')}>Remove Duplicate</button>
+              <button className="blue-bg text-white px-3 py-1 rounded cursor-pointer" onClick={() => applyFix(selectedRow, 'clamp_outlier')}>Trim Outlier</button>
             </div>
           ) : (
-            <p className="text-sm text-gray-500">Select a row in the table to apply a fix.</p>
+            <><p className="text-sm text-gray-500"><strong>Step 1: </strong>Select a row in the table to apply a fix.</p><p className="text-sm text-gray-500"><strong>Step 2: </strong>Select an action to apply to the selected row.</p></>
           )}
 
           <div className="mt-4">
-            <button onClick={runSimulation} className="bg-purple-600 text-white px-3 py-1 rounded">Run Simulation</button>
+            <button onClick={runSimulation} className="red-bg text-white px-3 py-1 rounded cursor-pointer">Run Simulation</button>
           </div>
 
           {simulationResult && (

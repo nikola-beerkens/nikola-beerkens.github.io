@@ -63,7 +63,7 @@ export default function Home() {
     const audio = audioRef.current;
   audio.loop = true;
   // make music a bit quieter by default
-  audio.volume = 0.25;
+  audio.volume = 0.08;
     audio.play().then(() => {
       setIsPlaying(true);
       setAutoplayBlocked(false);
@@ -79,7 +79,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#c0b597ff', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+    <div style={{ minHeight: '100vh',  display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
       {/* Top-left icons (play / pause) */}
       <div style={{ position: 'fixed', top: 12, left: 12, zIndex: 100, display: 'flex', gap: 8, alignItems: 'center' }}>
         <button
@@ -107,7 +107,7 @@ export default function Home() {
         </button>
       </div>
 
-      <div style={{ position: 'relative', width: '300px', height: '510px', border: '10px solid #3f2716ff' }}>
+      <div style={{ position: 'relative', width: '300px', height: '510px', border: '10px solid #6f5643' }}>
         {/* Background music (unmuted attempt). Top-left icons control play/pause. */}
         <audio ref={audioRef} src="/music2.mp3" />
         {/* Example dialogue cloud placed above the robot */}
