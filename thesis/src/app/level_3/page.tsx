@@ -66,7 +66,7 @@ export default function Level3BakeML() {
             </thead>
             <tbody>
               {data.map(row => (
-                <tr key={row.id} onClick={() => setSelectedRow(row.id)} className={`border-t cursor-pointer transition-colors hover:bg-gray-100 ${selectedRow===row.id?'bg-yellow-100':''}` }>
+                <tr key={row.id} onClick={() => setSelectedRow(row.id)} className={`border-t cursor-pointer transition-colors hover:bg-gray-100 ${selectedRow === row.id ? 'bg-yellow-100' : ''}`}>
                   <td className="px-2 py-1">{row.id}</td>
                   <td className="px-2 py-1">{row.sweet ? 'Yes' : 'No'}</td>
                   <td className="px-2 py-1">{row.length}</td>
@@ -101,9 +101,9 @@ export default function Level3BakeML() {
         <div className="bg-white rounded-lg shadow p-2">
           <h2 className="font-semibold mb-2">Decision Tree</h2>
           <div className="mb-4 text-left text-sm text-gray-700">
-            <p><strong>Node:</strong> A point in the tree where a question is asked about the data (e.g., "Is it sweet?").</p>
-            <p><strong>Branch:</strong> The path you follow from a node based on the answer (e.g., "Yes" or "No").</p>
-            <p><strong>Leaf:</strong> The end point of a branch, where a final decision or prediction is made (e.g., "Donut").</p>
+            <p><strong>Node:</strong> A point in the tree where a question is asked about the data (e.g., &quot;Is it sweet?&quot;).</p>
+            <p><strong>Branch:</strong> The path you follow from a node based on the answer (e.g., &quot;Yes&quot; or &quot;No&quot;).</p>
+            <p><strong>Leaf:</strong> The end point of a branch, where a final decision or prediction is made (e.g., &quot;Donut&quot;).</p>
           </div>
           <img src="/decisiontree.png" alt="Decision Tree" width={800} height={600} />
         </div>
