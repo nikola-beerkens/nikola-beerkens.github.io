@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 // Level 2 - Data-Cleaning Puzzle for BakeML
 export default function Level2BakeML() {
@@ -30,6 +31,7 @@ export default function Level2BakeML() {
   const [actionsLeft, setActionsLeft] = useState(4);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [simulationResult, setSimulationResult] = useState<{ correct: number; total: number; accuracy: string } | null>(null);
+  const router = useRouter();
 
   function applyFix(rowId: number, fixType: string) {
     if (actionsLeft <= 0) return;
@@ -147,6 +149,16 @@ export default function Level2BakeML() {
       <div className="mt-4 text-sm text-gray-500">
         <p>Tip: Choose the fixes wisely! You only have a limited number of actions, and better cleaning increases Clank&apos;s prediction accuracy in the bakery simulation.</p>
       </div>
+      {simulationResult && (
+        <div className="mt-8 flex gap-4">
+          <button
+            onClick={() => router.push('/level_3')}
+            className="blue-bg text-white px-4 py-2 rounded"
+          >
+            Go to Level 3
+          </button>
+        </div>
+      )}
     </div>
   );
 }
