@@ -378,7 +378,7 @@ export default function Level4BakeML() {
       <p className="text-gray-600 mb-6">
         Clank opens a flour-dusted basket of mixed pastries and sighs. Everything’s delicious, but nothing is organized.
         Your job is to teach Clank how to sort them: build a decision tree one choice at a time. Click a leaf to focus on
-        that group, then pick the split that best separates the pastries.
+        that group, then pick the split that best separates the pastries. Tip: aim to minimize the Gini impurity at each step!
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
