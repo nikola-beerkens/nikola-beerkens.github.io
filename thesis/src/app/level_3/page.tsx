@@ -1,5 +1,6 @@
 'use client';
 
+import Link from "next/link";
 import React, { useState } from "react";
 
 // Level 3 - Decision Tree Prediction Puzzle for BakeML
@@ -53,52 +54,82 @@ export default function Level3BakeML() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Dataset Table */}
-        <div className="bg-white rounded-lg shadow p-4 overflow-x-auto">
-          <table className="w-full table-auto border-collapse">
-            <thead>
-              <tr className="border-b">
-                <th className="px-2 py-1">id</th>
-                <th className="px-2 py-1">sweet</th>
-                <th className="px-2 py-1">length</th>
-                <th className="px-2 py-1">round</th>
-                <th className="px-2 py-1">Prediction</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map(row => (
-                <tr key={row.id} onClick={() => setSelectedRow(row.id)} className={`border-t cursor-pointer transition-colors hover:bg-gray-100 ${selectedRow === row.id ? 'bg-yellow-100' : ''}`}>
-                  <td className="px-2 py-1">{row.id}</td>
-                  <td className="px-2 py-1">{row.sweet ? 'Yes' : 'No'}</td>
-                  <td className="px-2 py-1">{row.length}</td>
-                  <td className="px-2 py-1">{row.round ? 'Yes' : 'No'}</td>
-                  <td className="px-2 py-1 font-semibold">{row._predicted || '-'}</td>
+        <div className="bg-white rounded-lg shadow p-4 overflow-x-auto md:col-start-1 md:row-start-1">
+            <table className="w-full table-auto border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="px-2 py-1">id</th>
+                  <th className="px-2 py-1">sweet</th>
+                  <th className="px-2 py-1">length</th>
+                  <th className="px-2 py-1">round</th>
+                  <th className="px-2 py-1">Prediction</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {!selectedRow && (
-            <p className="text-sm text-gray-500 mt-2">Select a row to pick the prediction.</p>
-          )}
-          {selectedRow && (
-            <>
-              <p className="mb-2 mt-4">Pick the prediction for <strong>row {selectedRow}</strong>:</p>
-              <div className="flex gap-2 flex-wrap mb-2">
-                {possiblePredictions.map(pred => (
-                  <button
-                    key={pred}
-                    className="blue-bg text-white px-3 py-1 rounded"
-                    onClick={() => applyPrediction(selectedRow, pred)}
-                  >
-                    {pred}
-                  </button>
+              </thead>
+              <tbody>
+                {data.map(row => (
+                  <tr key={row.id} onClick={() => setSelectedRow(row.id)} className={`border-t cursor-pointer transition-colors hover:bg-gray-100 ${selectedRow === row.id ? 'bg-yellow-100' : ''}`}>
+                    <td className="px-2 py-1">{row.id}</td>
+                    <td className="px-2 py-1">{row.sweet ? 'Yes' : 'No'}</td>
+                    <td className="px-2 py-1">{row.length}</td>
+                    <td className="px-2 py-1">{row.round ? 'Yes' : 'No'}</td>
+                    <td className="px-2 py-1 font-semibold">{row._predicted || '-'}</td>
+                  </tr>
                 ))}
+              </tbody>
+            </table>
+            {!selectedRow && (
+              <p className="text-sm text-gray-500 mt-2">Select a row to pick the prediction.</p>
+            )}
+            {selectedRow && (
+              <>
+                <p className="mb-2 mt-4">Pick the prediction for <strong>row {selectedRow}</strong>:</p>
+                <div className="flex gap-2 flex-wrap mb-2">
+                  {possiblePredictions.map(pred => (
+                    <button
+                      key={pred}
+                      className="blue-bg text-white px-3 py-1 rounded"
+                      onClick={() => applyPrediction(selectedRow, pred)}
+                    >
+                      {pred}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            <div className="mt-4 text-sm text-gray-500">
+              <p>Tip: Use the decision tree image to help you pick the correct answer for each row.</p>
+            </div>
+
+            {allAnswered && (
+              <div className="mt-4 rounded border p-3 bg-gray-50 text-sm">
+                <p>
+                  Correct predictions: <strong>{correctCount}</strong> / {totalCount}
+                </p>
+                <p>
+                  Accuracy: <strong>{accuracy}%</strong>
+                </p>
+                {correctCount === totalCount
+                  ? <span className="text-green-700 font-bold">All predictions are correct! Well done!</span>
+                  : <span className="text-red-700 font-bold">Some predictions are incorrect. Try again!</span>
+                }
               </div>
-            </>
-          )}
+            )}
         </div>
 
+        {allAnswered && correctCount === totalCount && (
+          <div className="md:col-start-1 md:row-start-2">
+            <Link
+              href="/level_4"
+              className="inline-block rounded px-4 py-2 blue-bg text-white"
+            >
+              Go to Level 4
+            </Link>
+          </div>
+        )}
+
         {/* Decision Tree Panel */}
-        <div className="bg-white rounded-lg shadow p-2">
+        <div className="bg-white rounded-lg shadow p-2 md:col-start-2 md:row-start-1">
           <h2 className="font-semibold mb-2">Decision Tree</h2>
           <div className="mb-4 text-left text-sm text-gray-700">
             <p><strong>Node:</strong> A point in the tree where a question is asked about the data (e.g., &quot;Is it sweet?&quot;).</p>
@@ -107,24 +138,6 @@ export default function Level3BakeML() {
           </div>
           <img src="/decisiontree.png" alt="Decision Tree" width={800} height={600} />
         </div>
-      </div>
-
-      <div className="mt-4 text-sm text-gray-500">
-        <p>Tip: Use the decision tree image to help you pick the correct answer for each row.</p>
-        {allAnswered && (
-          <div className="mt-4">
-            <p>
-              Correct predictions: <strong>{correctCount}</strong> / {totalCount}
-            </p>
-            <p>
-              Accuracy: <strong>{accuracy}%</strong>
-            </p>
-            {correctCount === totalCount
-              ? <span className="text-green-700 font-bold">🎉 All predictions are correct! Well done!</span>
-              : <span className="text-red-700 font-bold">Some predictions are incorrect. Try again!</span>
-            }
-          </div>
-        )}
       </div>
     </div>
   );

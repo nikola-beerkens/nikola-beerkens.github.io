@@ -10,22 +10,20 @@ export default function Level4BakeML() {
     roundness: "low" | "high";
     topping: boolean;
     filling: boolean;
-    glaze: boolean;
-    size: "small" | "large";
     label: string;
   };
 
   const dataset: Pastry[] = [
-    { id: 1, sweetness: "high", roundness: "high", topping: true, filling: false, glaze: true, size: "large", label: "Cake" },
-    { id: 2, sweetness: "low", roundness: "low", topping: false, filling: false, glaze: false, size: "large", label: "Bread" },
-    { id: 3, sweetness: "low", roundness: "high", topping: false, filling: false, glaze: false, size: "small", label: "Bun" },
-    { id: 4, sweetness: "high", roundness: "low", topping: true, filling: true, glaze: true, size: "small", label: "Pastry" },
-    { id: 5, sweetness: "medium", roundness: "low", topping: false, filling: false, glaze: false, size: "large", label: "Bread" },
-    { id: 6, sweetness: "high", roundness: "high", topping: false, filling: false, glaze: true, size: "small", label: "Donut" },
-    { id: 7, sweetness: "medium", roundness: "low", topping: false, filling: true, glaze: false, size: "small", label: "Croissant" },
+    { id: 1, sweetness: "high", roundness: "high", topping: true, filling: false, label: "Cake" },
+    { id: 2, sweetness: "low", roundness: "low", topping: false, filling: false, label: "Bread" },
+    { id: 3, sweetness: "low", roundness: "high", topping: false, filling: false, label: "Bun" },
+    { id: 4, sweetness: "high", roundness: "low", topping: true, filling: true, label: "Pastry" },
+    { id: 5, sweetness: "medium", roundness: "low", topping: false, filling: false, label: "Bread" },
+    { id: 6, sweetness: "high", roundness: "high", topping: false, filling: false, label: "Donut" },
+    { id: 7, sweetness: "medium", roundness: "low", topping: false, filling: true, label: "Croissant" },
   ];
 
-  type FeatureKey = "sweetness" | "roundness" | "topping" | "filling" | "glaze" | "size";
+  type FeatureKey = "sweetness" | "roundness" | "topping" | "filling";
 
   type SplitOption = {
     feature: FeatureKey;
@@ -75,10 +73,6 @@ export default function Level4BakeML() {
         return (row: Pastry) => row.topping;
       case "filling":
         return (row: Pastry) => row.filling;
-      case "glaze":
-        return (row: Pastry) => row.glaze;
-      case "size":
-        return (row: Pastry) => row.size === "large";
       default: {
         const neverFeature: never = feature;
         return (_row: Pastry) => Boolean(neverFeature);
@@ -96,10 +90,6 @@ export default function Level4BakeML() {
         return { yes: "topping", no: "no topping" };
       case "filling":
         return { yes: "filling", no: "no filling" };
-      case "glaze":
-        return { yes: "glaze", no: "no glaze" };
-      case "size":
-        return { yes: "large", no: "small" };
       default: {
         const neverFeature: never = feature;
         return { yes: String(neverFeature), no: "" };
@@ -255,6 +245,32 @@ export default function Level4BakeML() {
   const leafCount = leaves.length;
   const pureLeafCount = leaves.reduce((count, node) => (giniForRows(node.rows) === 0 ? count + 1 : count), 0);
 
+  const completion = useMemo(() => {
+    const eps = 1e-12;
+    const remainingLeafIds: NodeId[] = [];
+
+    for (const leaf of leaves) {
+      const gini = giniForRows(leaf.rows);
+      const isPure = gini <= eps;
+      if (isPure) continue;
+
+      let hasValidSplit = false;
+      for (const candidate of splits) {
+        if (giniAfterSplitForRows(leaf.rows, candidate.feature) !== undefined) {
+          hasValidSplit = true;
+          break;
+        }
+      }
+
+      if (hasValidSplit) remainingLeafIds.push(leaf.id);
+    }
+
+    return {
+      isComplete: remainingLeafIds.length === 0,
+      remainingLeafIds,
+    };
+  }, [leaves, splits]);
+
   const selectedNode = useMemo(() => findNode(decisionTree, selectedNodeId), [decisionTree, selectedNodeId]);
   const selectedIsLeaf = Boolean(selectedNode && !selectedNode.splitFeature);
   const selectedGini = selectedNode ? giniForRows(selectedNode.rows) : 0;
@@ -392,8 +408,6 @@ export default function Level4BakeML() {
                 <th className="px-2 py-1 text-left">roundness</th>
                 <th className="px-2 py-1 text-left">topping</th>
                 <th className="px-2 py-1 text-left">filling</th>
-                <th className="px-2 py-1 text-left">glaze</th>
-                <th className="px-2 py-1 text-left">size</th>
                 <th className="px-2 py-1 text-left">label</th>
               </tr>
             </thead>
@@ -405,8 +419,6 @@ export default function Level4BakeML() {
                   <td className="px-2 py-1">{row.roundness}</td>
                   <td className="px-2 py-1">{row.topping ? "yes" : "no"}</td>
                   <td className="px-2 py-1">{row.filling ? "yes" : "no"}</td>
-                  <td className="px-2 py-1">{row.glaze ? "yes" : "no"}</td>
-                  <td className="px-2 py-1">{row.size}</td>
                   <td className="px-2 py-1 font-semibold">{row.label}</td>
                 </tr>
               ))}
@@ -499,22 +511,41 @@ export default function Level4BakeML() {
           </div>
 
           {finished && (
-            <div className="mt-4 p-3 rounded border bg-green-50 border-green-200">
+            <div
+              className={`mt-4 p-3 rounded border ${
+                completion.isComplete ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200"
+              }`}
+            >
               <p className="font-semibold">Result</p>
-              <p className="text-sm mt-1">
-                Lowest-impurity choices: <span className="font-semibold">{evaluation.correctSteps}</span> / {evaluation.totalSteps}
-              </p>
-              {evaluation.totalSteps > 0 && (
-                <ol className="mt-2 list-decimal pl-5 text-xs text-gray-700">
-                  {evaluation.details.map((d, i) => (
-                    <li key={`${d.nodeId}-${i}`}>
-                      {d.nodeId}: {d.chosen}
-                      {d.chosenAfter !== undefined && d.bestAfter !== undefined
-                        ? ` (your gini ${d.chosenAfter.toFixed(3)}, best ${d.bestAfter.toFixed(3)})`
-                        : ""}
-                    </li>
-                  ))}
-                </ol>
+
+              {!completion.isComplete ? (
+                <>
+                  <p className="text-sm mt-1">
+                    Tree incomplete — keep splitting until all leaves are pure (Gini = 0) or no further split is possible.
+                  </p>
+                  <p className="text-xs text-gray-700 mt-1">
+                    Remaining leaves to split: <span className="font-semibold">{completion.remainingLeafIds.length}</span>
+                  </p>
+                  <p className="text-sm red mt-1">Reset to try again.</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm mt-1">
+                    Lowest-impurity choices: <span className="font-semibold">{evaluation.correctSteps}</span> / {evaluation.totalSteps}
+                  </p>
+                  {evaluation.totalSteps > 0 && (
+                    <ol className="mt-2 list-decimal pl-5 text-xs text-gray-700">
+                      {evaluation.details.map((d, i) => (
+                        <li key={`${d.nodeId}-${i}`}>
+                          {d.nodeId}: {d.chosen}
+                          {d.chosenAfter !== undefined && d.bestAfter !== undefined
+                            ? ` (your gini ${d.chosenAfter.toFixed(3)}, best ${d.bestAfter.toFixed(3)})`
+                            : ""}
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </>
               )}
             </div>
           )}
