@@ -231,7 +231,7 @@ export default function Level1BakeML() {
             onClick={() => router.push('/?completed=true')}
             className="brown-bg text-white px-4 py-2 rounded"
           >
-            Back to Bakery
+            Go to Level 2
           </button>
         </div>
       )}

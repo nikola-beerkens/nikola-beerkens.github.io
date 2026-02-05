@@ -9,6 +9,7 @@ body {
     sans-serif;
 }
 
+
 html {
   background-color: #ece6c2;
 }
@@ -37,4 +38,8 @@ html {
 }
 .brown {
   color: #6f5643;
+}
+
+.font-vt323 {
+  font-family: var(--font-vt323), monospace;
 }

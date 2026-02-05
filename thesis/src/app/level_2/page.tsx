@@ -152,8 +152,8 @@ export default function Level2BakeML() {
       {simulationResult && (
         <div className="mt-8 flex gap-4">
           <button
-            onClick={() => router.push('/level_3')}
-            className="blue-bg text-white px-4 py-2 rounded"
+            onClick={() => router.push('/?completed=true&level2Completed=true')}
+            className="brown-bg text-white px-4 py-2 rounded"
           >
             Go to Level 3
           </button>

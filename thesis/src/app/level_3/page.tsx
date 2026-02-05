@@ -120,8 +120,8 @@ export default function Level3BakeML() {
         {allAnswered && correctCount === totalCount && (
           <div className="md:col-start-1 md:row-start-2">
             <Link
-              href="/level_4"
-              className="inline-block rounded px-4 py-2 blue-bg text-white"
+              href="/?completed=true&level2Completed=true&level3Completed=true"
+              className="brown-bg text-white px-4 py-2 rounded"
             >
               Go to Level 4
             </Link>

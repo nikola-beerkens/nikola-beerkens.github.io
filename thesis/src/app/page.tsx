@@ -9,17 +9,20 @@ export default function Home() {
   const router = useRouter();
   const [robotX, setRobotX] = useState(0);
   const [objectiveCompleted, setObjectiveCompleted] = useState(false);
-  const maxX = 55; // Maximum movement to the right
+  const [level2Completed, setLevel2Completed] = useState(false);
+  const [level3Completed, setLevel3Completed] = useState(false);
+  const [level4Completed, setLevel4Completed] = useState(false); // NEW
+  const maxX = 55;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
 
-  // Track if user has visited level_1
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('completed') === 'true') {
-      setObjectiveCompleted(true);
-    }
+    if (urlParams.get('completed') === 'true') setObjectiveCompleted(true);
+    if (urlParams.get('level2Completed') === 'true') setLevel2Completed(true);
+    if (urlParams.get('level3Completed') === 'true') setLevel3Completed(true);
+    if (urlParams.get('level4Completed') === 'true') setLevel4Completed(true); // NEW
   }, []);
 
   // Add keyframe animation for bounce
@@ -61,9 +64,8 @@ export default function Home() {
     // try to autoplay unmuted
     if (!audioRef.current) return;
     const audio = audioRef.current;
-  audio.loop = true;
-  // make music a bit quieter by default
-  audio.volume = 0.08;
+    audio.loop = true;
+    audio.volume = 0.08;
     audio.play().then(() => {
       setIsPlaying(true);
       setAutoplayBlocked(false);
@@ -138,9 +140,12 @@ export default function Home() {
 
           {/* Note */}
         <Image src="/note.png" alt="note" fill style={{ position: 'absolute', objectFit: 'contain', zIndex: 7 }} />
+
+         {/* Note */}
+        <Image src="/postit.png" alt="postit" fill style={{ position: 'absolute', objectFit: 'contain', zIndex: 8 }} />
         
-          {/* Objective icon on register (hidden after completion) */}
-          {!objectiveCompleted && (
+          {/* Objective icon on register (hidden after level 1 completion) */}
+          {!objectiveCompleted && !level4Completed && (
             <button
               onClick={() => router.push('/level_1')}
               className="bounce-icon"
@@ -151,15 +156,55 @@ export default function Home() {
             </button>
           )}
 
-          {/* After returning from level_1 show objective above the note */}
-          {objectiveCompleted && (
+          {/* After returning from level_1 show objective above the note (until level 2 is completed) */}
+          {objectiveCompleted && !level2Completed && !level4Completed && (
             <button
               onClick={() => router.push('/level_2')}
               className="bounce-icon"
               aria-label="Start level 2"
               style={{ position: 'absolute', top: '61%', left: '61%', zIndex: 70, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer'}}>
-              <Image src="/objective.png" alt="objective completed" width={48} height={48} />
+              <Image src="/objective.png" alt="objective level 2" width={48} height={48} />
             </button>
+          )}
+
+          {/* After completing level 2 show objective above the post-it (until level 3 is completed) */}
+          {objectiveCompleted && level2Completed && !level3Completed && !level4Completed && (
+            <button
+              onClick={() => router.push('/level_3')}
+              className="bounce-icon"
+              aria-label="Start level 3"
+              style={{ position: 'absolute', top: '29%', left: '11%', zIndex: 70, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+            >
+              <Image src="/objective.png" alt="objective level 3" width={48} height={48} />
+            </button>
+          )}
+
+          {/* After completing level 3 show objective pointing at the bread shelf */}
+          {objectiveCompleted && level2Completed && level3Completed && !level4Completed && (
+            <button
+              onClick={() => router.push('/level_4')} // adjust if your Level 4 route differs
+              className="bounce-icon"
+              aria-label="Start level 4"
+              // NOTE: tweak top/left to align exactly with the bread shelf in /shelf.png
+              style={{ position: 'absolute', top: '80%', left: '65%', zIndex: 70, background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}
+            >
+              <Image src="/objective.png" alt="objective level 4" width={48} height={48} />
+            </button>
+          )}
+
+          {/* Clank dialogue after completing Level 4 */}
+          {level4Completed && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '20%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 70,
+              }}
+            >
+              <DialogueCloud>Good job! Thank you for completing my training!</DialogueCloud>
+            </div>
           )}
       </div>
     </div>

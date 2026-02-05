@@ -15,8 +15,9 @@ export default function DialogueCloud({ children, style, tailDirection = 'bottom
     boxShadow: '0 6px 18px rgba(0,0,0,0.12)',
     display: 'inline-block',
     maxWidth: 220,
-    fontSize: 15,
-    lineHeight: '1.2',
+    fontSize: 14,
+    lineHeight: '1.1',
+    fontFamily: "VT323",
   };
 
   const wrapper: React.CSSProperties = {

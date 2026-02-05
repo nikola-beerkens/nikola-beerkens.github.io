@@ -1,5 +1,6 @@
 'use client';
 
+import Link from "next/dist/client/link";
 import React, { useMemo, useState } from "react";
 
 // Level 4 – Choosing Splits with Gini Index and Entropy
@@ -560,6 +561,16 @@ export default function Level4BakeML() {
             </p>
           </div>
         </div>
+        {finished && completion.isComplete && (
+          <div className="md:col-start-1 md:row-start-2">
+            <Link
+              href="/?completed=true&level2Completed=true&level3Completed=true&level4Completed=true"
+              className="brown-bg text-white px-4 py-2 rounded"
+            >
+              Go Back To Bakery
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
