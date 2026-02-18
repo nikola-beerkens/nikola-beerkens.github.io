@@ -246,7 +246,14 @@ export default function Home() {
             >
               <DialogueCloud>
                 <div>
-                  <div>Good job! Thank you for completing my training!</div>
+                  <div>
+                    {starRating === 3
+                      ? "Thank you for training me! Everything worked perfect!"
+                      : starRating === 2
+                        ? "Thank you for training me! Some pastries got burned, but we learned a lot."
+                        : "Thank you for training me! Unfortunately something went wrong and all the pastries got burned."
+                    }
+                  </div>
                   <div style={{ marginTop: 6 }}>
                     Rating: <strong>{'★'.repeat(starRating)}{'☆'.repeat(3 - starRating)}</strong>
                   </div>
