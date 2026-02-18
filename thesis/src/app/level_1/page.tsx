@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 // Level 1 - "What is Learning?"
@@ -63,6 +63,23 @@ export default function Level1BakeML() {
 
   const stats = computeAccuracy();
 
+  useEffect(() => {
+    if (!stats) return;
+    try {
+      localStorage.setItem(
+        "bakeml.level1.score",
+        JSON.stringify({
+          correct: stats.correct,
+          total: stats.total,
+          accuracy: stats.accuracy,
+          updatedAt: new Date().toISOString(),
+        })
+      );
+    } catch {
+      // ignore storage failures (private mode, disabled storage, etc.)
+    }
+  }, [stats?.correct, stats?.total, stats?.accuracy]);
+
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Level 1: What is Learning?</h1>
@@ -124,12 +141,14 @@ export default function Level1BakeML() {
               />
               <strong>THEN BAKE</strong>
 
-              <input
+              <select
                 value={newRule.result}
                 onChange={(e) => setNewRule({ ...newRule, result: e.target.value })}
                 className="border rounded px-2 py-1"
-                placeholder="result (e.g. sweet)"
-              />
+              >
+                <option value="cinnamon roll">cinnamon roll</option>
+                <option value="foccacia">foccacia</option>
+              </select>
 
               <button onClick={addRule} className="blue-bg text-white px-3 py-1 rounded">Add Rule</button>
             </div>
@@ -191,31 +210,20 @@ export default function Level1BakeML() {
                   </table>
                 </div>
               )}
-
-              {stats && (
-                <div className="mt-3 text-sm">
-                  <p>Correct: <strong>{stats.correct}</strong> / {stats.total}</p>
-                  <p>Accuracy: <strong>{stats.accuracy.toFixed(1)}%</strong></p>
-                </div>
-              )}
             </div>
           </div>
 
           <div className="bg-white rounded-lg shadow p-4">
             <h2 className="font-semibold">Bakery Simulation</h2>
-            <p className="text-sm mt-2">Clank will run a short simulation day using your rules. Good accuracy → more happy customers.</p>
-            <div className="mt-3">
-              <p className="text-sm">Simulation outcome:</p>
-              <div className="mt-2">
-                {stats ? (
-                  <div>
-                    <p className="font-medium">Happy customers: <span className="blue">{Math.round((stats.accuracy / 100) * data.length)}</span></p>
-                    <p className="text-sm text-gray-600">(Higher accuracy means fewer wasted pastries)</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">Run predictions to see simulation results.</p>
-                )}
-              </div>
+            <div className="mt-3 text-sm">
+              {stats ? (
+                <div>
+                  <p>Correct: <strong>{stats.correct}</strong> / {stats.total}</p>
+                  <p>Accuracy: <strong>{stats.accuracy.toFixed(1)}%</strong></p>
+                </div>
+              ) : (
+                <p className="text-gray-500">Run predictions to see correctness.</p>
+              )}
             </div>
           </div>
         </div>

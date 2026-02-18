@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 // Level 2 - Data-Cleaning Puzzle for BakeML
@@ -33,6 +33,23 @@ export default function Level2BakeML() {
   const [simulationResult, setSimulationResult] = useState<{ correct: number; total: number; accuracy: string } | null>(null);
   const router = useRouter();
 
+  useEffect(() => {
+    if (!simulationResult) return;
+    try {
+      localStorage.setItem(
+        "bakeml.level2.score",
+        JSON.stringify({
+          correct: simulationResult.correct,
+          total: simulationResult.total,
+          accuracy: simulationResult.accuracy,
+          updatedAt: new Date().toISOString(),
+        })
+      );
+    } catch {
+      // ignore storage failures
+    }
+  }, [simulationResult?.correct, simulationResult?.total, simulationResult?.accuracy]);
+
   function applyFix(rowId: number, fixType: string) {
     if (actionsLeft <= 0) return;
 
@@ -52,7 +69,7 @@ export default function Level2BakeML() {
               newRow._removed = true;
               break;
             case "clamp_outlier":
-              if (newRow.amount !== null && newRow.amount > 1000) newRow.amount = 500;
+              if (newRow.amount !== null && newRow.amount > 1000) newRow.amount = 1000;
               break;
             default:
               break;
@@ -68,13 +85,29 @@ export default function Level2BakeML() {
 
   function runSimulation() {
     // Very simple "model accuracy" simulation based on data cleanliness
-    const total = data.filter((row) => !row._removed).length;
+    const activeRows = data.filter((row) => !row._removed);
+    const total = activeRows.length;
+
+    // Penalize duplicates unless the user removes them.
+    // Duplicates are defined as rows with the same (ingredient, amount, type).
+    const duplicateCounts = new Map<string, number>();
+    for (const row of activeRows) {
+      const key = `${row.ingredient}__${String(row.amount)}__${row.type}`;
+      duplicateCounts.set(key, (duplicateCounts.get(key) ?? 0) + 1);
+    }
+
     let correct = 0;
-    data.forEach((row) => {
-      if (row._removed) return;
-      if (row.amount !== null && row.type === (row.type === "swwet" ? "sweet" : row.type) && row.amount <= 1000) correct++;
-    });
-    const accuracy = ((correct / total) * 100).toFixed(1);
+    for (const row of activeRows) {
+      const key = `${row.ingredient}__${String(row.amount)}__${row.type}`;
+      const hasAmount = row.amount !== null;
+      const inRange = row.amount !== null && row.amount <= 1000;
+      const typeValid = row.type === "sweet" || row.type === "savory";
+      const notDuplicate = (duplicateCounts.get(key) ?? 0) === 1;
+
+      if (hasAmount && inRange && typeValid && notDuplicate) correct++;
+    }
+
+    const accuracy = total > 0 ? ((correct / total) * 100).toFixed(1) : "0.0";
     setSimulationResult({ correct, total, accuracy });
   }
 
@@ -93,7 +126,7 @@ export default function Level2BakeML() {
                <tr className="border-b">
                  <th className="px-2 py-1">id</th>
                  <th className="px-2 py-1">ingredient</th>
-                 <th className="px-2 py-1">amount</th>
+                 <th className="px-2 py-1">amount (in grams)</th>
                  <th className="px-2 py-1">type</th>
                </tr>
              </thead>

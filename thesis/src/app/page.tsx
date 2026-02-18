@@ -12,6 +12,8 @@ export default function Home() {
   const [level2Completed, setLevel2Completed] = useState(false);
   const [level3Completed, setLevel3Completed] = useState(false);
   const [level4Completed, setLevel4Completed] = useState(false); // NEW
+  const [overallScorePct, setOverallScorePct] = useState<number | null>(null);
+  const [starRating, setStarRating] = useState<0 | 1 | 2 | 3>(0);
   const maxX = 55;
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -24,6 +26,45 @@ export default function Home() {
     if (urlParams.get('level3Completed') === 'true') setLevel3Completed(true);
     if (urlParams.get('level4Completed') === 'true') setLevel4Completed(true); // NEW
   }, []);
+
+  useEffect(() => {
+    if (!level4Completed) return;
+
+    try {
+      const level1 = JSON.parse(localStorage.getItem('bakeml.level1.score') ?? 'null');
+      const level2 = JSON.parse(localStorage.getItem('bakeml.level2.score') ?? 'null');
+      const level3 = JSON.parse(localStorage.getItem('bakeml.level3.score') ?? 'null');
+      const level4 = JSON.parse(localStorage.getItem('bakeml.level4.score') ?? 'null');
+
+      const level1Pct = typeof level1?.accuracy === 'number' ? level1.accuracy : null;
+      const level2Pct = typeof level2?.accuracy === 'string' ? Number.parseFloat(level2.accuracy) : null;
+      const level3Pct = typeof level3?.accuracy === 'string' ? Number.parseFloat(level3.accuracy) : null;
+
+      let level4Pct: number | null = null;
+      if (level4 && typeof level4 === 'object') {
+        const isComplete = Boolean(level4.isComplete);
+        const correctSteps = typeof level4.correctSteps === 'number' ? level4.correctSteps : 0;
+        const totalSteps = typeof level4.totalSteps === 'number' ? level4.totalSteps : 0;
+        level4Pct = isComplete && totalSteps > 0 ? (correctSteps / totalSteps) * 100 : (isComplete ? 100 : 0);
+      }
+
+      const parts = [level1Pct, level2Pct, level3Pct, level4Pct].filter((v): v is number => Number.isFinite(v));
+      if (parts.length === 0) {
+        setOverallScorePct(null);
+        setStarRating(0);
+        return;
+      }
+
+      const avg = parts.reduce((a, b) => a + b, 0) / parts.length;
+      const clamped = Math.max(0, Math.min(100, avg));
+      const stars = Math.max(0, Math.min(3, Math.round((clamped / 100) * 3))) as 0 | 1 | 2 | 3;
+      setOverallScorePct(clamped);
+      setStarRating(stars);
+    } catch {
+      setOverallScorePct(null);
+      setStarRating(0);
+    }
+  }, [level4Completed]);
 
   // Add keyframe animation for bounce
   useEffect(() => {
@@ -203,7 +244,17 @@ export default function Home() {
                 zIndex: 70,
               }}
             >
-              <DialogueCloud>Good job! Thank you for completing my training!</DialogueCloud>
+              <DialogueCloud>
+                <div>
+                  <div>Good job! Thank you for completing my training!</div>
+                  <div style={{ marginTop: 6 }}>
+                    Rating: <strong>{'★'.repeat(starRating)}{'☆'.repeat(3 - starRating)}</strong>
+                  </div>
+                  {overallScorePct !== null && (
+                    <div>Overall score: <strong>{overallScorePct.toFixed(1)}%</strong></div>
+                  )}
+                </div>
+              </DialogueCloud>
             </div>
           )}
       </div>

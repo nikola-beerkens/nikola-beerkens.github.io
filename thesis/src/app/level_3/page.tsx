@@ -1,7 +1,7 @@
 'use client';
 
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 // Level 3 - Decision Tree Prediction Puzzle for BakeML
 export default function Level3BakeML() {
@@ -46,6 +46,23 @@ export default function Level3BakeML() {
   const correctCount = data.filter(row => row._predicted === getCorrectPrediction(row)).length;
   const totalCount = data.length;
   const accuracy = ((correctCount / totalCount) * 100).toFixed(1);
+
+  useEffect(() => {
+    if (!allAnswered) return;
+    try {
+      localStorage.setItem(
+        "bakeml.level3.score",
+        JSON.stringify({
+          correct: correctCount,
+          total: totalCount,
+          accuracy,
+          updatedAt: new Date().toISOString(),
+        })
+      );
+    } catch {
+      // ignore storage failures
+    }
+  }, [allAnswered, correctCount, totalCount, accuracy]);
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -111,13 +128,13 @@ export default function Level3BakeML() {
                 </p>
                 {correctCount === totalCount
                   ? <span className="text-green-700 font-bold">All predictions are correct! Well done!</span>
-                  : <span className="text-red-700 font-bold">Some predictions are incorrect. Try again!</span>
+                  : <span className="text-red-700 font-bold">Some predictions are incorrect — you can still continue, or change your answers.</span>
                 }
               </div>
             )}
         </div>
 
-        {allAnswered && correctCount === totalCount && (
+        {allAnswered && (
           <div className="md:col-start-1 md:row-start-2">
             <Link
               href="/?completed=true&level2Completed=true&level3Completed=true"
@@ -135,6 +152,7 @@ export default function Level3BakeML() {
             <p><strong>Node:</strong> A point in the tree where a question is asked about the data (e.g., &quot;Is it sweet?&quot;).</p>
             <p><strong>Branch:</strong> The path you follow from a node based on the answer (e.g., &quot;Yes&quot; or &quot;No&quot;).</p>
             <p><strong>Leaf:</strong> The end point of a branch, where a final decision or prediction is made (e.g., &quot;Donut&quot;).</p>
+            <p><strong>Depth:</strong> How many questions you ask from the top of the tree to reach a node (the root is depth 0).</p>
           </div>
           <img src="/decisiontree.png" alt="Decision Tree" width={800} height={600} />
         </div>

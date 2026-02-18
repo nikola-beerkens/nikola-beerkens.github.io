@@ -1,30 +1,63 @@
 'use client';
 
 import Link from "next/dist/client/link";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 // Level 4 – Choosing Splits with Gini Index and Entropy
 export default function Level4BakeML() {
   type Pastry = {
     id: number;
-    sweetness: "low" | "medium" | "high";
-    roundness: "low" | "high";
-    topping: boolean;
+    sweet: boolean;
+    length: "long" | "short";
+    round: boolean;
     filling: boolean;
     label: string;
   };
 
+  function getCorrectLabel(row: Omit<Pastry, "label">): string {
+    if (row.sweet && row.round && row.length === "short") {
+      return row.filling ? "Jam Donut" : "Donut";
+    }
+    if (row.sweet && !row.round && row.length === "short") {
+      return row.filling ? "Chocolate Croissant" : "Croissant";
+    }
+    if (!row.sweet && row.round && row.length === "long") {
+      return row.filling ? "Cheese Baguette" : "Baguette";
+    }
+    if (!row.sweet && !row.round && row.length === "short") {
+      return row.filling ? "Stuffed Roll" : "Sandwich Bread";
+    }
+    return row.filling ? "Stuffed Roll" : "Sandwich Bread";
+  }
+
+  function makeRow(id: number, sweet: boolean, length: "long" | "short", round: boolean, filling: boolean): Pastry {
+    const base = { id, sweet, length, round, filling };
+    return { ...base, label: getCorrectLabel(base) };
+  }
+
+  // Same “input columns” style as Level 3 (short/long + Yes/No), with one extra column: filling.
+  // Slightly imbalanced counts so different splits produce different Gini values.
   const dataset: Pastry[] = [
-    { id: 1, sweetness: "high", roundness: "high", topping: true, filling: false, label: "Cake" },
-    { id: 2, sweetness: "low", roundness: "low", topping: false, filling: false, label: "Bread" },
-    { id: 3, sweetness: "low", roundness: "high", topping: false, filling: false, label: "Bun" },
-    { id: 4, sweetness: "high", roundness: "low", topping: true, filling: true, label: "Pastry" },
-    { id: 5, sweetness: "medium", roundness: "low", topping: false, filling: false, label: "Bread" },
-    { id: 6, sweetness: "high", roundness: "high", topping: false, filling: false, label: "Donut" },
-    { id: 7, sweetness: "medium", roundness: "low", topping: false, filling: true, label: "Croissant" },
+    makeRow(1, true, "short", true, false),
+    makeRow(2, true, "short", true, false),
+    makeRow(3, true, "short", true, false),
+    makeRow(4, true, "short", true, true),
+    makeRow(5, true, "short", true, true),
+
+    makeRow(6, true, "short", false, false),
+    makeRow(7, true, "short", false, true),
+    makeRow(8, true, "short", false, true),
+
+    makeRow(9, false, "long", true, false),
+    makeRow(10, false, "long", true, false),
+    makeRow(11, false, "long", true, true),
+
+    makeRow(12, false, "short", false, false),
+    makeRow(13, false, "short", false, true),
+    makeRow(14, false, "short", false, true),
   ];
 
-  type FeatureKey = "sweetness" | "roundness" | "topping" | "filling";
+  type FeatureKey = "sweet" | "length" | "round" | "filling";
 
   type SplitOption = {
     feature: FeatureKey;
@@ -32,10 +65,10 @@ export default function Level4BakeML() {
   };
 
   const splits: SplitOption[] = [
-    { feature: "sweetness", description: "Sweetness = high vs. not high" },
-    { feature: "roundness", description: "Roundness = high vs. low" },
-    { feature: "topping", description: "Has topping vs. no topping" },
-    { feature: "filling", description: "Has filling vs. no filling" },
+    { feature: "sweet", description: "Sweet = Yes vs. No" },
+    { feature: "length", description: "Length = long vs. short" },
+    { feature: "round", description: "Round = Yes vs. No" },
+    { feature: "filling", description: "Filling = Yes vs. No" },
   ];
 
   type NodeId = string;
@@ -66,12 +99,12 @@ export default function Level4BakeML() {
 
   function predicateForFeature(feature: FeatureKey) {
     switch (feature) {
-      case "sweetness":
-        return (row: Pastry) => row.sweetness === "high";
-      case "roundness":
-        return (row: Pastry) => row.roundness === "high";
-      case "topping":
-        return (row: Pastry) => row.topping;
+      case "sweet":
+        return (row: Pastry) => row.sweet;
+      case "length":
+        return (row: Pastry) => row.length === "long";
+      case "round":
+        return (row: Pastry) => row.round;
       case "filling":
         return (row: Pastry) => row.filling;
       default: {
@@ -83,14 +116,14 @@ export default function Level4BakeML() {
 
   function branchLabelsForFeature(feature: FeatureKey): { yes: string; no: string } {
     switch (feature) {
-      case "sweetness":
-        return { yes: "high", no: "not high" };
-      case "roundness":
-        return { yes: "high", no: "low" };
-      case "topping":
-        return { yes: "topping", no: "no topping" };
+      case "sweet":
+        return { yes: "Yes", no: "No" };
+      case "length":
+        return { yes: "long", no: "short" };
+      case "round":
+        return { yes: "Yes", no: "No" };
       case "filling":
-        return { yes: "filling", no: "no filling" };
+        return { yes: "Yes", no: "No" };
       default: {
         const neverFeature: never = feature;
         return { yes: String(neverFeature), no: "" };
@@ -389,6 +422,26 @@ export default function Level4BakeML() {
     };
   }, [actions, dataset, splits]);
 
+  useEffect(() => {
+    if (!finished) return;
+    try {
+      localStorage.setItem(
+        "bakeml.level4.score",
+        JSON.stringify({
+          isComplete: completion.isComplete,
+          correctSteps: evaluation.correctSteps,
+          totalSteps: evaluation.totalSteps,
+          weightedGini: Number(treeWeightedGini.toFixed(3)),
+          leaves: leafCount,
+          pureLeaves: pureLeafCount,
+          updatedAt: new Date().toISOString(),
+        })
+      );
+    } catch {
+      // ignore storage failures
+    }
+  }, [finished, completion.isComplete, evaluation.correctSteps, evaluation.totalSteps, treeWeightedGini, leafCount, pureLeafCount]);
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <h1 className="text-2xl font-bold mb-2">Level 4: Choosing Splits with Gini Index</h1>
@@ -405,9 +458,9 @@ export default function Level4BakeML() {
             <thead>
               <tr className="border-b">
                 <th className="px-2 py-1 text-left">id</th>
-                <th className="px-2 py-1 text-left">sweetness</th>
-                <th className="px-2 py-1 text-left">roundness</th>
-                <th className="px-2 py-1 text-left">topping</th>
+                <th className="px-2 py-1 text-left">sweet</th>
+                <th className="px-2 py-1 text-left">length</th>
+                <th className="px-2 py-1 text-left">round</th>
                 <th className="px-2 py-1 text-left">filling</th>
                 <th className="px-2 py-1 text-left">label</th>
               </tr>
@@ -416,10 +469,10 @@ export default function Level4BakeML() {
               {dataset.map((row) => (
                 <tr key={row.id} className="border-t hover:bg-gray-50 transition-colors">
                   <td className="px-2 py-1">{row.id}</td>
-                  <td className="px-2 py-1">{row.sweetness}</td>
-                  <td className="px-2 py-1">{row.roundness}</td>
-                  <td className="px-2 py-1">{row.topping ? "yes" : "no"}</td>
-                  <td className="px-2 py-1">{row.filling ? "yes" : "no"}</td>
+                  <td className="px-2 py-1">{row.sweet ? "Yes" : "No"}</td>
+                  <td className="px-2 py-1">{row.length}</td>
+                  <td className="px-2 py-1">{row.round ? "Yes" : "No"}</td>
+                  <td className="px-2 py-1">{row.filling ? "Yes" : "No"}</td>
                   <td className="px-2 py-1 font-semibold">{row.label}</td>
                 </tr>
               ))}
