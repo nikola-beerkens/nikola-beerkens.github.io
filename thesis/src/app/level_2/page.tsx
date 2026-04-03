@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 // Level 2 - Data-Cleaning Puzzle for BakeML
 export default function Level2BakeML() {
@@ -112,9 +113,13 @@ export default function Level2BakeML() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="relative p-6 max-w-5xl mx-auto overflow-visible">
       <h1 className="text-2xl font-bold mb-4">Level 2: Data-Cleaning Puzzle</h1>
-      <p className="mb-4">Help Clank clean the bakery dataset! You have <strong>{actionsLeft}</strong> actions left.</p>
+      <p className="text-base text-gray-900">Help Clank clean the bakery dataset! You have <strong>{actionsLeft}</strong> actions left.</p>
+      <div className="mb-4 mt-3 rounded-lg border-l-4 border-amber-500 bg-amber-100 px-4 py-3 text-sm text-gray-900 shadow-sm">
+        <p><strong>Tip:</strong> Choose the fixes wisely! You only have a limited number of actions, and better cleaning increases Clank&apos;s prediction accuracy in the bakery simulation.</p>
+        <p><strong>Note:</strong> This database contains duplicate entries.</p>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Dataset Table */}
@@ -155,6 +160,16 @@ export default function Level2BakeML() {
         {/* Fix Panel */}
         <div className="bg-white rounded-lg shadow p-4">
           <h2 className="font-semibold mb-2">Fix Actions</h2>
+          {selectedRow && !simulationResult && (
+            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-gray-800">
+              <p className="font-semibold">Clank says: Quick hint before you start.</p>
+              <p><strong>Fill Missing</strong>: Use when a value is absent.</p>
+              <p><strong>Correct Label</strong>: Use when a category name looks suspicious/misspelled.</p>
+              <p><strong>Remove Duplicate</strong>: Use when two rows represent the same record.</p>
+              <p><strong>Trim Outlier</strong>: Use when one number is far outside the normal range.</p>
+              <p className="mt-1 text-xs text-gray-600">Some actions may do nothing on certain rows, so choose carefully.</p>
+            </div>
+          )}
           {selectedRow ? (
             <div className="flex flex-col gap-2">
               <button className="blue-bg text-white px-3 py-1 rounded cursor-pointer" onClick={() => applyFix(selectedRow, 'fill_missing')}>Fill Missing</button>
@@ -179,9 +194,18 @@ export default function Level2BakeML() {
         </div>
       </div>
 
-      <div className="mt-4 text-sm text-gray-500">
-        <p>Tip: Choose the fixes wisely! You only have a limited number of actions, and better cleaning increases Clank&apos;s prediction accuracy in the bakery simulation.</p>
-      </div>
+      {!simulationResult && (
+        <aside className="hidden xl:block absolute top-55 -right-56 pointer-events-none">
+          <Image
+            src="/robot_baker.png"
+            alt="Clank the robot baker"
+            width={260}
+            height={260}
+            className="shrink-0"
+          />
+        </aside>
+      )}
+
       {simulationResult && (
         <div className="mt-8 flex gap-4">
           <button

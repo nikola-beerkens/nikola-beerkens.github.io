@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 export default function Level1BakeML() {
   const router = useRouter();
   type Row = { id: number; customer_pref: string; time: string; label: string };
-  type Rule = { feature: keyof Row; op: string; value: string; result: string; id: number };
+  type Rule = { feature: keyof Row | ""; op: string; value: string; result: string; id: number };
   type Prediction = { id: number; pred: string; matchedRule: Rule | null };
 
   const initialData: Row[] = [
@@ -24,10 +24,18 @@ export default function Level1BakeML() {
 
   const [data] = useState<Row[]>(initialData);
   const [rules, setRules] = useState<Rule[]>([]);
-  const [newRule, setNewRule] = useState<Rule>({ feature: "customer_pref", op: "==", value: "sweet", result: "cinnamon roll", id: 0 });
+  const [newRule, setNewRule] = useState<Rule>({
+  feature: "",
+  op: "",
+  value: "",
+  result: "",
+  id: 0
+});
   const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const isRuleComplete = Boolean(newRule.feature && newRule.op && newRule.value && newRule.result);
 
   function addRule() {
+    if (!isRuleComplete) return;
     setRules((r) => [...r, { ...newRule, id: Date.now() }]);
   }
 
@@ -39,12 +47,12 @@ export default function Level1BakeML() {
     const preds = data.map((row) => {
       // apply rules in order
       for (const rule of rules) {
+        if (!rule.feature || !rule.op || !rule.value || !rule.result) continue;
         if (rule.op === "==") {
-          if (String(row[rule.feature]) === String(rule.value)) return { id: row.id, pred: rule.result, matchedRule: rule };
+          if (String(row[rule.feature as keyof Row]) === String(rule.value)) return { id: row.id, pred: rule.result, matchedRule: rule };
         } else if (rule.op === "!=") {
-          if (String(row[rule.feature]) !== String(rule.value)) return { id: row.id, pred: rule.result, matchedRule: rule };
+          if (String(row[rule.feature as keyof Row]) !== String(rule.value)) return { id: row.id, pred: rule.result, matchedRule: rule };
         }
-        // (extendable for numeric ops)
       }
       return { id: row.id, pred: "unknown", matchedRule: null };
     });
@@ -83,7 +91,7 @@ export default function Level1BakeML() {
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Level 1: What is Learning?</h1>
-      <p className="mb-4">Help Clank by creating simple IF rules. Rules are applied in order; Clank will repeat them exactly.</p>
+      <p className="mb-4">Help Clank by creating simple <strong>IF THEN</strong> rules. Rules are applied in order; Clank will repeat them exactly.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="col-span-1 md:col-span-2">
@@ -120,6 +128,7 @@ export default function Level1BakeML() {
                 onChange={(e) => setNewRule({ ...newRule, feature: e.target.value as keyof Row })}
                 className="border rounded px-2 py-1"
               >
+                <option value="">Select feature</option>
                 <option value="customer_pref">customer_pref</option>
                 <option value="time">time</option>
               </select>
@@ -129,16 +138,30 @@ export default function Level1BakeML() {
                 onChange={(e) => setNewRule({ ...newRule, op: e.target.value })}
                 className="border rounded px-2 py-1"
               >
+                <option value="">Select operator</option>
                 <option value="==">IS</option>
                 <option value="!=">IS NOT</option>
               </select>
 
-              <input
+              <select
                 value={newRule.value}
                 onChange={(e) => setNewRule({ ...newRule, value: e.target.value })}
                 className="border rounded px-2 py-1"
-                placeholder="value (e.g. sweet)"
-              />
+              >
+                <option value="">Select value</option>
+                {newRule.feature === "customer_pref" && (
+                  <>
+                    <option value="sweet">sweet</option>
+                    <option value="savory">savory</option>
+                  </>
+                )}
+                {newRule.feature === "time" && (
+                  <>
+                    <option value="morning">morning</option>
+                    <option value="evening">evening</option>
+                  </>
+                )}
+              </select>
               <strong>THEN BAKE</strong>
 
               <select
@@ -146,12 +169,23 @@ export default function Level1BakeML() {
                 onChange={(e) => setNewRule({ ...newRule, result: e.target.value })}
                 className="border rounded px-2 py-1"
               >
+                <option value="">Select bake</option>
                 <option value="cinnamon roll">cinnamon roll</option>
                 <option value="foccacia">foccacia</option>
               </select>
 
-              <button onClick={addRule} className="blue-bg text-white px-3 py-1 rounded">Add Rule</button>
+              <button
+                onClick={addRule}
+                disabled={!isRuleComplete}
+                className="blue-bg text-white px-3 py-1 rounded disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Add Rule
+              </button>
             </div>
+
+            {!isRuleComplete && (
+              <p className="mt-2 text-sm text-red-600">Please complete all rule fields before adding a rule.</p>
+            )}
 
             <div className="mt-4">
               <h3 className="font-medium">Current Rules (applied top → bottom)</h3>
@@ -166,7 +200,7 @@ export default function Level1BakeML() {
                     </div>
                   </li>
                 ))}
-                {!rules.length && <li className="text-sm text-gray-500 mt-2">No rules yet — Clank will do nothing.</li>}
+                {!rules.length && <li className="text-sm text-gray-500 mt-2">No rules yet. Clank will do nothing.</li>}
               </ul>
 
               <div className="mt-4 flex gap-2">
@@ -177,61 +211,59 @@ export default function Level1BakeML() {
           </div>
         </div>
 
-        <div className="col-span-1">
-          <div className="bg-white rounded-lg shadow p-4 mb-4">
-            <h2 className="font-semibold">Clank&apos;s Log</h2>
-            <p className="text-sm mt-2">Clank will follow the rules you provide exactly. Use the dataset preview to find patterns and create simple IF rules.</p>
+        {predictions.length > 0 && (
+          <div className="col-span-1">
+            <div className="bg-white rounded-lg shadow p-4 mb-4">
+              <h2 className="font-semibold">Clank&apos;s Log</h2>
+              <p className="text-sm mt-2">Clank will follow the rules you provide exactly. Use the dataset preview to find patterns and create simple IF THEN rules.</p>
 
-            <div className="mt-3">
-              <h3 className="font-medium">Predictions</h3>
-              {!predictions.length && <p className="text-sm text-gray-500 mt-2">No predictions yet. Click <strong>Apply Rules</strong>.</p>}
-              {predictions.length > 0 && (
-                <div className="mt-2 text-sm">
-                  <table className="w-full table-auto">
-                    <thead>
-                      <tr className="text-xs text-gray-500 text-left">
-                        <th className="pr-2">id</th>
-                        <th className="pr-2">prediction</th>
-                        <th className="pr-2">label</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {predictions.map((p) => {
-                        const row = data.find((d) => d.id === p.id);
-                        return (
-                          <tr key={p.id} className="border-t">
-                            <td className="py-1">{p.id}</td>
-                            <td className="py-1">{p.pred}</td>
-                            <td className="py-1">{row ? row.label : '—'}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <div className="mt-3">
+                <h3 className="font-medium">Predictions</h3>
+                {!predictions.length && <p className="text-sm text-gray-500 mt-2">No predictions yet. Click <strong>Apply Rules</strong>.</p>}
+                {predictions.length > 0 && (
+                  <div className="mt-2 text-sm">
+                    <table className="w-full table-auto">
+                      <thead>
+                        <tr className="text-xs text-gray-500 text-left">
+                          <th className="pr-2">id</th>
+                          <th className="pr-2">prediction</th>
+                          <th className="pr-2">label</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {predictions.map((p) => {
+                          const row = data.find((d) => d.id === p.id);
+                          return (
+                            <tr key={p.id} className="border-t">
+                              <td className="py-1">{p.id}</td>
+                              <td className="py-1">{p.pred}</td>
+                              <td className="py-1">{row ? row.label : '—'}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-4">
+              <h2 className="font-semibold">Bakery Simulation</h2>
+              <div className="mt-3 text-sm">
+                {stats ? (
+                  <div>
+                    <p>Correct: <strong>{stats.correct}</strong> / {stats.total}</p>
+                    <p>Accuracy: <strong>{stats.accuracy.toFixed(1)}%</strong></p>
+                  </div>
+                ) : (
+                  <p className="text-gray-500">Run predictions to see correctness.</p>
+                )}
+              </div>
             </div>
           </div>
-
-          <div className="bg-white rounded-lg shadow p-4">
-            <h2 className="font-semibold">Bakery Simulation</h2>
-            <div className="mt-3 text-sm">
-              {stats ? (
-                <div>
-                  <p>Correct: <strong>{stats.correct}</strong> / {stats.total}</p>
-                  <p>Accuracy: <strong>{stats.accuracy.toFixed(1)}%</strong></p>
-                </div>
-              ) : (
-                <p className="text-gray-500">Run predictions to see correctness.</p>
-              )}
-            </div>
-          </div>
-        </div>
+        )}
       </div>
-
-      {/* <div className="mt-6 text-xs text-gray-500">
-        <p>Tip: This level is intentionally simple. The goal is to show that following explicit rules is different from &quot;learning.&quot; Later levels will introduce automated training.</p>
-      </div> */}
 
       {predictions.length > 0 && (
         <div className="mt-8 flex gap-4">

@@ -1,7 +1,10 @@
 'use client';
 
+/* eslint-disable react-hooks/exhaustive-deps */
+
 import Link from "next/dist/client/link";
-import React, { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 // Level 4 – Choosing Splits with Gini Index and Entropy
 export default function Level4BakeML() {
@@ -64,12 +67,12 @@ export default function Level4BakeML() {
     description: string;
   };
 
-  const splits: SplitOption[] = [
+  const splits = useMemo<SplitOption[]>(() => ([
     { feature: "sweet", description: "Sweet = Yes vs. No" },
     { feature: "length", description: "Length = long vs. short" },
     { feature: "round", description: "Round = Yes vs. No" },
     { feature: "filling", description: "Filling = Yes vs. No" },
-  ];
+  ]), []);
 
   type NodeId = string;
   const ROOT_ID: NodeId = "root";
@@ -85,7 +88,7 @@ export default function Level4BakeML() {
   const [actions, setActions] = useState<Array<{ nodeId: NodeId; feature: FeatureKey }>>([]);
   const [finished, setFinished] = useState(false);
 
-  function giniForRows(rows: Pastry[]) {
+  const giniForRows = useCallback((rows: Pastry[]) => {
     if (rows.length === 0) return 0;
     const counts = new Map<string, number>();
     for (const row of rows) counts.set(row.label, (counts.get(row.label) ?? 0) + 1);
@@ -95,9 +98,9 @@ export default function Level4BakeML() {
       sumSquares += p * p;
     }
     return 1 - sumSquares;
-  }
+  }, []);
 
-  function predicateForFeature(feature: FeatureKey) {
+  const predicateForFeature = useCallback((feature: FeatureKey) => {
     switch (feature) {
       case "sweet":
         return (row: Pastry) => row.sweet;
@@ -107,14 +110,12 @@ export default function Level4BakeML() {
         return (row: Pastry) => row.round;
       case "filling":
         return (row: Pastry) => row.filling;
-      default: {
-        const neverFeature: never = feature;
-        return (_row: Pastry) => Boolean(neverFeature);
-      }
+      default:
+        return () => false;
     }
-  }
+  }, []);
 
-  function branchLabelsForFeature(feature: FeatureKey): { yes: string; no: string } {
+  const branchLabelsForFeature = useCallback((feature: FeatureKey): { yes: string; no: string } => {
     switch (feature) {
       case "sweet":
         return { yes: "Yes", no: "No" };
@@ -124,12 +125,10 @@ export default function Level4BakeML() {
         return { yes: "Yes", no: "No" };
       case "filling":
         return { yes: "Yes", no: "No" };
-      default: {
-        const neverFeature: never = feature;
-        return { yes: String(neverFeature), no: "" };
-      }
+      default:
+        return { yes: String(feature), no: "" };
     }
-  }
+  }, []);
 
   type TreeNode = {
     id: NodeId;
@@ -157,7 +156,7 @@ export default function Level4BakeML() {
     }
 
     return build(ROOT_ID, 0, dataset);
-  }, [ROOT_ID, dataset, splitsByNode]);
+  }, [dataset, predicateForFeature, splitsByNode]);
 
   function TreeNodeView({ node }: { node: TreeNode }) {
     const gini = giniForRows(node.rows);
@@ -182,7 +181,6 @@ export default function Level4BakeML() {
     }
 
     const split = splitByFeature.get(node.splitFeature);
-
     return (
       <div className="flex flex-col items-center">
         <button
@@ -227,15 +225,15 @@ export default function Level4BakeML() {
     );
   }
 
-  function collectLeaves(node: TreeNode): TreeNode[] {
+  const collectLeaves = useCallback((node: TreeNode): TreeNode[] => {
     if (!node.splitFeature) return [node];
     const leaves: TreeNode[] = [];
     if (node.left) leaves.push(...collectLeaves(node.left));
     if (node.right) leaves.push(...collectLeaves(node.right));
     return leaves.length > 0 ? leaves : [node];
-  }
+  }, []);
 
-  function findNode(node: TreeNode, id: NodeId): TreeNode | undefined {
+  const findNode = useCallback((node: TreeNode, id: NodeId): TreeNode | undefined => {
     if (node.id === id) return node;
     if (node.left) {
       const found = findNode(node.left, id);
@@ -246,34 +244,28 @@ export default function Level4BakeML() {
       if (found) return found;
     }
     return undefined;
-  }
+  }, []);
 
-  function partitionRows(rows: Pastry[], feature: FeatureKey) {
+  const partitionRows = useCallback((rows: Pastry[], feature: FeatureKey) => {
     const predicate = predicateForFeature(feature);
     const left: Pastry[] = [];
     const right: Pastry[] = [];
     for (const row of rows) (predicate(row) ? left : right).push(row);
     return { left, right };
-  }
+  }, [predicateForFeature]);
 
-  function giniAfterSplitForRows(rows: Pastry[], feature: FeatureKey) {
+  const giniAfterSplitForRows = useCallback((rows: Pastry[], feature: FeatureKey) => {
     if (rows.length === 0) return undefined;
     const { left, right } = partitionRows(rows, feature);
     if (left.length === 0 || right.length === 0) return undefined;
     return (left.length / rows.length) * giniForRows(left) + (right.length / rows.length) * giniForRows(right);
-  }
+  }, [giniForRows, partitionRows]);
 
-  function weightedGiniForLeaves(leaves: TreeNode[]) {
+  const weightedGiniForLeaves = useCallback((leaves: TreeNode[]) => {
     const total = leaves.reduce((sum, leaf) => sum + leaf.rows.length, 0);
     if (total === 0) return 0;
     return leaves.reduce((acc, leaf) => acc + (leaf.rows.length / total) * giniForRows(leaf.rows), 0);
-  }
-
-  function labelCounts(rows: Pastry[]) {
-    const counts = new Map<string, number>();
-    for (const row of rows) counts.set(row.label, (counts.get(row.label) ?? 0) + 1);
-    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  }
+  }, [giniForRows]);
 
   const leaves = useMemo(() => collectLeaves(decisionTree), [decisionTree]);
   const leafCount = leaves.length;
@@ -305,10 +297,11 @@ export default function Level4BakeML() {
     };
   }, [leaves, splits]);
 
-  const selectedNode = useMemo(() => findNode(decisionTree, selectedNodeId), [decisionTree, selectedNodeId]);
+  const selectedNode = useMemo(() => findNode(decisionTree, selectedNodeId), [decisionTree, findNode, selectedNodeId]);
   const selectedIsLeaf = Boolean(selectedNode && !selectedNode.splitFeature);
   const selectedGini = selectedNode ? giniForRows(selectedNode.rows) : 0;
   const treeWeightedGini = useMemo(() => weightedGiniForLeaves(leaves), [leaves]);
+  const highlightedRowIds = useMemo(() => new Set((selectedNode?.rows ?? []).map((row) => row.id)), [selectedNode]);
 
   const nodeGiniIfSplitSelectedByFeature = useMemo(() => {
     const map = new Map<FeatureKey, number>();
@@ -319,7 +312,7 @@ export default function Level4BakeML() {
       map.set(candidate.feature, after);
     }
     return map;
-  }, [selectedIsLeaf, selectedNode, splits]);
+  }, [giniAfterSplitForRows, selectedIsLeaf, selectedNode, splits]);
 
   const weightedGiniIfSplitSelectedByFeature = useMemo(() => {
     const map = new Map<FeatureKey, number>();
@@ -342,7 +335,7 @@ export default function Level4BakeML() {
     }
 
     return map;
-  }, [leaves, selectedIsLeaf, selectedNode, splits]);
+  }, [leaves, partitionRows, selectedIsLeaf, selectedNode, splits, weightedGiniForLeaves]);
 
   function addSplitToSelected(feature: FeatureKey) {
     if (finished) return;
@@ -420,7 +413,7 @@ export default function Level4BakeML() {
       totalSteps: actions.length,
       details,
     };
-  }, [actions, dataset, splits]);
+  }, [actions, dataset, findNode, giniAfterSplitForRows, predicateForFeature, splits]);
 
   useEffect(() => {
     if (!finished) return;
@@ -443,13 +436,17 @@ export default function Level4BakeML() {
   }, [finished, completion.isComplete, evaluation.correctSteps, evaluation.totalSteps, treeWeightedGini, leafCount, pureLeafCount]);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="relative p-6 max-w-7xl mx-auto overflow-visible">
       <h1 className="text-2xl font-bold mb-2">Level 4: Choosing Splits with Gini Index</h1>
-      <p className="text-gray-600 mb-6">
+      <p className="mb-6">
         Clank opens a flour-dusted basket of mixed pastries and sighs. Everything’s delicious, but nothing is organized.
         Your job is to teach Clank how to sort them: build a decision tree one choice at a time. Click a leaf to focus on
-        that group, then pick the split that best separates the pastries. Tip: aim to minimize the Gini impurity at each step!
+        that group, then pick the split that best separates the pastries.
       </p>
+      <div className="mb-6 rounded-lg border-l-4 border-amber-500 bg-amber-100 px-4 py-3 text-sm text-gray-900 shadow-sm">
+        <p><strong>Tip:</strong> Aim to minimize the Gini impurity at each step.</p>
+        <p><strong>Note:</strong> Highlighted rows are the ones counted in the currently selected node&apos;s Gini.</p>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-lg shadow p-4 md:col-span-2 overflow-x-auto md:overflow-visible">
@@ -467,7 +464,10 @@ export default function Level4BakeML() {
             </thead>
             <tbody>
               {dataset.map((row) => (
-                <tr key={row.id} className="border-t hover:bg-gray-50 transition-colors">
+                <tr
+                  key={row.id}
+                  className={`border-t transition-colors ${highlightedRowIds.has(row.id) ? "bg-yellow-100" : ""}`}
+                >
                   <td className="px-2 py-1">{row.id}</td>
                   <td className="px-2 py-1">{row.sweet ? "Yes" : "No"}</td>
                   <td className="px-2 py-1">{row.length}</td>
@@ -481,17 +481,10 @@ export default function Level4BakeML() {
 
           <div className="mt-6">
             <h3 className="text-sm font-semibold mb-2">Decision tree</h3>
-            <p className="text-xs text-gray-600 mb-3">
-              Updates live as you choose splits. Scroll sideways if needed.
-            </p>
             <div className="overflow-x-auto">
               <div className="min-w-max py-2">
                 <TreeNodeView node={decisionTree} />
               </div>
-            </div>
-            <div className="mt-2 text-xs text-gray-600">
-              Leaves: <span className="font-semibold">{leafCount}</span> • Pure leaves (Gini = 0):{" "}
-              <span className="font-semibold">{pureLeafCount}</span>
             </div>
           </div>
         </div>
@@ -502,28 +495,16 @@ export default function Level4BakeML() {
             Click a leaf in the tree to select it, then choose a split to expand only that leaf.
           </p>
 
-          <div className="mb-4">
-            <p className="text-sm font-semibold mb-2">Selected node</p>
-            {!selectedNode ? (
-              <p className="text-sm text-gray-500">Select a node in the tree.</p>
-            ) : (
-              <div className="text-sm text-gray-700">
-                <p>
-                  <span className="font-semibold">Rows:</span> {selectedNode.rows.length} • <span className="font-semibold">Gini:</span>{" "}
-                  {selectedGini.toFixed(3)}
-                </p>
-                <p className="mt-2 font-semibold">Labels</p>
-                <ul className="list-disc pl-5 text-xs text-gray-600">
-                  {labelCounts(selectedNode.rows).map(([label, count]) => (
-                    <li key={label}>
-                      {label}: {count}
-                    </li>
-                  ))}
-                </ul>
-                {!selectedIsLeaf && <p className="mt-2 text-xs text-gray-500">Select a leaf to add a new split.</p>}
-              </div>
-            )}
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 shadow-sm text-sm text-gray-800">
+            <p className="font-semibold">Clank says: Gini index tells you how mixed the labels are in a node.</p>
+            <p className="mt-1">It is computed from the class proportions in a node. In simple terms, Gini = 1 - sum of squared class probabilities.</p>
+            <p className="mt-1">Gini 0 denotes that all elements belong to a certain class or there exists only one class (pure), and
+ Gini 1 denotes that the elements are randomly distributed across various classes (impure).</p>
           </div>
+
+          {selectedNode && !selectedIsLeaf && (
+            <p className="mb-4 text-xs text-gray-500">Select a leaf to add a new split.</p>
+          )}
 
           <div className="flex flex-col gap-3">
             {splits.map((split) => {
@@ -614,17 +595,28 @@ export default function Level4BakeML() {
             </p>
           </div>
         </div>
-        {finished && completion.isComplete && (
-          <div className="md:col-start-1 md:row-start-2">
-            <Link
-              href="/?completed=true&level2Completed=true&level3Completed=true&level4Completed=true"
-              className="brown-bg text-white px-4 py-2 rounded"
-            >
-              Go Back To Bakery
-            </Link>
-          </div>
-        )}
       </div>
+
+      <aside className="hidden xl:block absolute top-70 -right-56 pointer-events-none">
+        <Image
+          src="/robot_baker.png"
+          alt="Clank the robot baker"
+          width={260}
+          height={260}
+          className="shrink-0"
+        />
+      </aside>
+
+      {finished && completion.isComplete && (
+        <div className="mt-4 flex justify-start">
+          <Link
+            href="/?completed=true&level2Completed=true&level3Completed=true&level4Completed=true"
+            className="brown-bg text-white px-4 py-2 rounded"
+          >
+            Go Back To Bakery
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
